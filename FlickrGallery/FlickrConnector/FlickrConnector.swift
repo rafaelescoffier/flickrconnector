@@ -35,7 +35,7 @@ enum FlickrConnectorTarget: TargetType {
         }
     }
     
-    var parameters: [String: Any]? {
+    var parameters: [String: Any] {
         var params: [String: Any] = [
             "api_key" : FlickrConnectorTarget.key,
             "format" : "json",
@@ -80,13 +80,13 @@ enum FlickrConnectorTarget: TargetType {
     var task: Task {
         switch self {
         case .search, .sizes:
-            return .requestPlain
+            return .requestParameters(parameters: parameters, encoding: URLEncoding.default)
         }
     }
 }
 
 struct FlickrConnector {
-    static let provider = MoyaProvider<FlickrConnectorTarget>(manager: pinningManager())
+    static let provider = MoyaProvider<FlickrConnectorTarget>()
     
     @discardableResult
     static func search(tag: String, page: Int, completion: @escaping (((Photos?) -> ()))) -> Cancellable {
