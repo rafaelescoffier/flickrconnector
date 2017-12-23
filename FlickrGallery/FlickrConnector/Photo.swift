@@ -6,28 +6,37 @@
 //  Copyright © 2017 Rafael Escoffier. All rights reserved.
 //
 
-import Argo
-import Runes
-import Curry
-
-struct Photo {
+struct Photo: Decodable {
     let id: String
     let title: String
     let sizes: [Size]?
+    
+    
+    enum PhotoKeys: String, CodingKey {
+        case id = "id"
+        case title = "title"
+    }
     
     init(id: String, title: String) {
         self.id = id
         self.title = title
         self.sizes = nil
     }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: PhotoKeys.self)
+        
+        let id: String = try container.decode(String.self, forKey: .id)
+        let title: String = try container.decode(String.self, forKey: .title)
+        
+        self.id = id
+        self.title = title
+        self.sizes = nil
+    }
 }
 
-extension Photo: Argo.Decodable {
-    static func decode(_ json: JSON) -> Decoded<Photo> {
-        return curry(Photo.init)
-            <^> json <| "id"
-            <*> json <| "title"
-    }
+extension Photo {
+    
 }
 
 extension Photo {

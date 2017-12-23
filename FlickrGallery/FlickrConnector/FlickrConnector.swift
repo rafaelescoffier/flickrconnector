@@ -14,7 +14,6 @@ enum FlickrConnectorTarget: TargetType {
         return nil
     }
     
-    static let key = "flickrKey"
     
     case search(tag: String, page: Int)
     case sizes(id: String)
@@ -93,8 +92,15 @@ struct FlickrConnector {
         return provider.request(.search(tag: tag, page: page)) { result in
             switch result {
             case .success(let response):
-                let photos: Photos? = try? response.mapObject(rootKey: "photos")
-                completion(photos)
+                do {
+                    let photos: Photos? = try JSONDecoder().decode(Photos.self, from: response.data)
+                    completion(photos)
+                } catch let error {
+                    print("Parsing failed with error: \(error)")
+                    completion(nil)
+                }
+                
+                
             case .failure(let error):
                 print("Failed with error: \(error)")
                 completion(nil)
@@ -107,8 +113,13 @@ struct FlickrConnector {
         return provider.request(.sizes(id: id)) { result in
             switch result {
             case .success(let response):
-                let sizes: Sizes? = try? response.mapObject(rootKey: "sizes")
-                completion(sizes?.sizes)
+                do {
+                    let sizes: Sizes? = try JSONDecoder().decode(Sizes.self, from: response.data)
+                    completion(sizes?.sizes)
+                } catch let error {
+                    print("Parsing failed with error: \(error)")
+                    completion(nil)
+                }
             case .failure(let error):
                 print("Failed with error: \(error)")
                 completion(nil)

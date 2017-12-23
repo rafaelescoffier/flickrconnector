@@ -6,17 +6,25 @@
 //  Copyright © 2017 Rafael Escoffier. All rights reserved.
 //
 
-import Argo
-import Runes
-import Curry
-
-struct Photos {
+struct Photos: Decodable {
     let photos: [Photo]?
-}
-
-extension Photos: Argo.Decodable {
-    static func decode(_ json: JSON) -> Decoded<Photos> {
-        return curry(Photos.init)
-            <^> json <||? ["photo"]
+    
+    enum PhotosKeys: String, CodingKey {
+        case photo = "photos"
+    }
+    
+    enum PhotoKeys: String, CodingKey {
+        case photo = "photo"
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: PhotosKeys.self)
+        let photoContainer = try container.nestedContainer(keyedBy: PhotoKeys.self, forKey: .photo)
+        
+        let photos: [Photo] = try photoContainer.decode([Photo].self, forKey: .photo)
+        
+        self.photos = photos
     }
 }
+
+

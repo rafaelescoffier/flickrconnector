@@ -6,40 +6,53 @@
 //  Copyright © 2017 Rafael Escoffier. All rights reserved.
 //
 
-import Argo
-import Runes
-import Curry
 
-struct Sizes {
+struct Sizes: Decodable {
     let sizes: [Size]
-}
-
-extension Sizes: Argo.Decodable {
-    static func decode(_ json: JSON) -> Decoded<Sizes> {
-        return curry(Sizes.init)
-            <^> json <|| ["size"]
+    
+    enum SizesKeys: String, CodingKey {
+        case sizes = "sizes"
+    }
+    
+    enum SizeKeys: String, CodingKey {
+        case size = "size"
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: SizesKeys.self)
+        let sizeContainer = try container.nestedContainer(keyedBy: SizeKeys.self, forKey: .sizes)
+        
+        let sizes = try sizeContainer.decode([Size].self, forKey: .size)
+        self.sizes = sizes
     }
 }
 
-struct Size {
+struct Size: Decodable {
     let label: SizeType
     let source: String
+    
+    enum SizeKeys: String, CodingKey {
+        case label = "label"
+        case source = "source"
+    }
     
     init(label: String, source: String) {
         self.label = SizeType(rawValue: label) ?? .unknown
         self.source = source
     }
-}
-
-extension Size: Argo.Decodable {
-    static func decode(_ json: JSON) -> Decoded<Size> {
-        return curry(Size.init)
-            <^> json <| "label"
-            <*> json <| "source"
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: SizeKeys.self)
+        
+        let label = (try? container.decode(SizeType.self, forKey: .label)) ?? .unknown
+        let source = try container.decode(String.self, forKey: .source)
+        
+        self.label = label
+        self.source = source
     }
 }
 
-enum SizeType: String {
+enum SizeType: String, Decodable {
     case square = "Large Square"
     case large = "Large"
     case original = "Original"
