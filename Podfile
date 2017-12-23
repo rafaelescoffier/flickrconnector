@@ -7,9 +7,9 @@ target 'FlickrGallery' do
 
   # Pods for FlickrGallery
 
-pod 'Kingfisher'
-pod 'Moya', '9.0'
-pod 'ReactiveCocoa', '6.0.1'
+pod 'Kingfisher', '4.5.0'
+pod 'Moya', '10.0.1'
+pod 'ReactiveCocoa', '7.0.1'
 
   target 'FlickrGalleryTests' do
     inherit! :search_paths
