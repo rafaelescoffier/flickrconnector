@@ -9,6 +9,7 @@
 import ReactiveSwift
 import ReactiveCocoa
 import Result
+import Moya
 
 class ViewModel {
     typealias PhotosChangeSet = Changeset<Photo>
@@ -25,8 +26,10 @@ class ViewModel {
     fileprivate var photos: [Photo]
     fileprivate let photosChangeObserver: Signal<PhotosChangeSet, NoError>.Observer
     
-    fileprivate var currentPage = MutableProperty(1)
+    fileprivate var currentPage = MutableProperty(0)
+    fileprivate var currentSearch = MutableProperty("")
     
+    fileprivate var currentRequest: Cancellable?
     init() {
         let (photosChangeSignal, photosChangeObserver) = Signal<PhotosChangeSet, NoError>.pipe()
         self.photosChangeSignal = photosChangeSignal
@@ -43,7 +46,9 @@ class ViewModel {
             .on(event: { _ in self.isLoading.value = true })
             .flatMap(.latest, { _ in
                 return SignalProducer<[Photo], NoError> { o, _ in
-                    FlickrConnector.search(tag: "kittens", page: self.currentPage.value, completion: { (photos) in
+                    self.currentRequest?.cancel()
+                    
+                    self.currentRequest = FlickrConnector.search(tag: self.currentSearch.value, page: self.currentPage.value, completion: { (photos) in
                         o.send(value: photos?.photos ?? [])
                         o.sendCompleted()
                     })
@@ -51,40 +56,60 @@ class ViewModel {
             })
             .on(event: { _ in self.isLoading.value = false })
             .observeValues { [weak self] newPhotos in
-                guard let strongSelf = self else { return }
-                
-                var updatedPhotos = strongSelf.photos
-                updatedPhotos.append(contentsOf: newPhotos)
-                
-                let changeset = Changeset(
-                    oldItems: strongSelf.photos,
-                    newItems: updatedPhotos,
-                    contentMatches: Photo.homeContentMatches
-                )
-                
-                strongSelf.photos = updatedPhotos
-                
-                photosChangeObserver.send(value: changeset)
+                self?.addPhotos(newPhotos: newPhotos)
             }
-        
-        // Refresh photos list when view controller is active
-        viewControllerActive
-            .producer
-            .filter { $0 }
-            .map { _ in () }
-            .start(refreshObserver)
         
         currentPage
             .signal
-            .skipRepeats()
             .map { _ in () }
             .observe(refreshObserver)
+        
+        currentSearch
+            .signal
+            .skipRepeats()
+            .filter { $0.count > 0 }
+            .observeValues { _ in
+                self.clearPhotos()
+                
+                self.currentPage.value = 1
+        }
+    }
+    
+    fileprivate func addPhotos(newPhotos: [Photo]) {
+        var updatedPhotos = photos
+        updatedPhotos.append(contentsOf: newPhotos)
+        
+        let changeset = Changeset(
+            oldItems: photos,
+            newItems: updatedPhotos,
+            contentMatches: Photo.homeContentMatches
+        )
+        
+        photos = updatedPhotos
+        
+        photosChangeObserver.send(value: changeset)
+    }
+    
+    fileprivate func clearPhotos() {
+        let changeset = Changeset(
+            oldItems: photos,
+            newItems: [],
+            contentMatches: Photo.homeContentMatches
+        )
+        
+        self.photos = []
+        
+        photosChangeObserver.send(value: changeset)
+    }
+    
+    func search(for text: String) {
+        currentSearch.value = text
     }
     
     func nextPage() {
         guard !isLoading.value else { return }
         
-        currentPage.value += currentPage.value
+        currentPage.value += 1
     }
 }
 

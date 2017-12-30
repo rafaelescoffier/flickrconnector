@@ -89,6 +89,8 @@ struct FlickrConnector {
     
     @discardableResult
     static func search(tag: String, page: Int, completion: @escaping (((Photos?) -> ()))) -> Cancellable {
+        print("Will search photos with tag: \(tag) and page: \(page)")
+        
         return provider.request(.search(tag: tag, page: page)) { result in
             switch result {
             case .success(let response):
@@ -97,12 +99,12 @@ struct FlickrConnector {
                     completion(photos)
                 } catch let error {
                     print("Parsing failed with error: \(error)")
+                    
                     completion(nil)
                 }
-                
-                
             case .failure(let error):
                 print("Failed with error: \(error)")
+                
                 completion(nil)
             }
         }

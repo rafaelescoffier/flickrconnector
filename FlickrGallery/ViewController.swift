@@ -15,6 +15,7 @@ class ViewController: UIViewController {
     @IBOutlet weak var collectionView: UICollectionView!
     @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     
+    let searchController = UISearchController(searchResultsController: nil)
     let viewModel = ViewModel()
     
     let selectedIndexPath = MutableProperty(IndexPath())
@@ -25,12 +26,29 @@ class ViewController: UIViewController {
         let nib = UINib(nibName: "PhotoCell", bundle: nil)
         collectionView.register(nib, forCellWithReuseIdentifier: PhotoCell.identifier)
         
+        setupSearchViewController()
         bindViewModel()
+        
+        viewModel.search(for: "Kittens")
     }
     
-    func bindViewModel() {
+    private func setupSearchViewController() {
+        searchController.searchResultsUpdater = self
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.placeholder = "Kittens"
+        
+        if #available(iOS 11.0, *) {
+            navigationItem.searchController = searchController
+        } else {
+            // Fallback on earlier versions
+        }
+        
+        definesPresentationContext = true
+    }
+    
+    private func bindViewModel() {
         // Notifies the viewModel of the viewController active status
-        viewModel.viewControllerActive.value = true
+        viewModel.viewControllerActive <~ isActive()
         
         activityIndicator.reactive.isHidden <~ viewModel.isLoading.producer.map { !$0 }
         
@@ -104,5 +122,12 @@ extension ViewController: UICollectionViewDelegateFlowLayout {
         let size = collectionView.frame.size.width / 2 - diff
         
         return CGSize(width: size , height: size)
+    }
+}
+
+extension ViewController: UISearchResultsUpdating {
+    // MARK: - UISearchResultsUpdating Delegate
+    func updateSearchResults(for searchController: UISearchController) {
+        viewModel.search(for: searchController.searchBar.text ?? "")
     }
 }
