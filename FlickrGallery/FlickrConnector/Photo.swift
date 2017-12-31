@@ -6,7 +6,7 @@
 //  Copyright © 2017 Rafael Escoffier. All rights reserved.
 //
 
-struct Photo: Decodable {
+struct Photo: Codable {
     let id: String
     let title: String
     let sizes: [Size]?
@@ -32,6 +32,13 @@ struct Photo: Decodable {
         self.id = id
         self.title = title
         self.sizes = nil
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: PhotoKeys.self)
+        
+        try container.encode(id, forKey: .id)
+        try container.encode(title, forKey: .title)
     }
 }
 
