@@ -31,7 +31,7 @@ class PhotoCell: UICollectionViewCell {
         request?.cancel()
         imageRequest?.cancel()
         
-        request = FlickrConnector.sizes(id: photo.id) { [weak self] (sizes) in
+        request = FlickrConnector.shared.sizes(id: photo.id) { [weak self] (sizes) in
             guard let squareSize = sizes?.filter({ $0.label == .square }).first else { return }
             
             self?.imageRequest = self?.photoImageView.kf.setImage(with: URL(string: squareSize.source))

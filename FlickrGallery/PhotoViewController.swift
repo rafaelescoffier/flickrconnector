@@ -27,7 +27,7 @@ class PhotoViewController: UIViewController {
         
         activityIndicator.isHidden = false
         
-        FlickrConnector.sizes(id: photo.id) { [weak self] (sizes) in
+        FlickrConnector.shared.sizes(id: photo.id) { [weak self] (sizes) in
             // Fallback to original size if large isn't available
             let size = sizes?.filter({ $0.label == .large }).first ?? sizes?.filter({ $0.label == .original }).first
             

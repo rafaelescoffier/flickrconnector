@@ -7,7 +7,7 @@
 //
 
 
-struct Sizes: Decodable {
+struct Sizes: Codable {
     let sizes: [Size]
     
     enum SizesKeys: String, CodingKey {
@@ -18,6 +18,10 @@ struct Sizes: Decodable {
         case size = "size"
     }
     
+    init(sizes: [Size]) {
+        self.sizes = sizes
+    }
+    
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: SizesKeys.self)
         let sizeContainer = try container.nestedContainer(keyedBy: SizeKeys.self, forKey: .sizes)
@@ -25,9 +29,16 @@ struct Sizes: Decodable {
         let sizes = try sizeContainer.decode([Size].self, forKey: .size)
         self.sizes = sizes
     }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: SizesKeys.self)
+        var sizeContainer = container.nestedContainer(keyedBy: SizeKeys.self, forKey: .sizes)
+        
+        try sizeContainer.encode(sizes, forKey: .size)
+    }
 }
 
-struct Size: Decodable {
+struct Size: Codable {
     let label: SizeType
     let source: String
     
@@ -50,9 +61,16 @@ struct Size: Decodable {
         self.label = label
         self.source = source
     }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: SizeKeys.self)
+        
+        try container.encode(label, forKey: .label)
+        try container.encode(source, forKey: .source)
+    }
 }
 
-enum SizeType: String, Decodable {
+enum SizeType: String, Codable {
     case square = "Large Square"
     case large = "Large"
     case original = "Original"

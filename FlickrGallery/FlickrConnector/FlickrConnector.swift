@@ -10,10 +10,11 @@ import Moya
 import Alamofire
 
 enum FlickrConnectorTarget: TargetType {
+    static let key = "06100f51aea69eb90e9933cd56b3500c"
+    
     var headers: [String : String]? {
         return nil
     }
-    
     
     case search(tag: String, page: Int)
     case sizes(id: String)
@@ -84,11 +85,17 @@ enum FlickrConnectorTarget: TargetType {
     }
 }
 
-struct FlickrConnector {
-    static let provider = MoyaProvider<FlickrConnectorTarget>()
+class FlickrConnector {
+    static let shared = FlickrConnector()
+    
+    let provider: MoyaProvider<FlickrConnectorTarget>
+    
+    init(provider: MoyaProvider<FlickrConnectorTarget> = MoyaProvider<FlickrConnectorTarget>()) {
+        self.provider = provider
+    }
     
     @discardableResult
-    static func search(tag: String, page: Int, completion: @escaping (((Photos?) -> ()))) -> Cancellable {
+    func search(tag: String, page: Int, completion: @escaping (((Photos?) -> ()))) -> Cancellable {
         print("Will search photos with tag: \(tag) and page: \(page)")
         
         return provider.request(.search(tag: tag, page: page)) { result in
@@ -111,7 +118,7 @@ struct FlickrConnector {
     }
     
     @discardableResult
-    static func sizes(id: String, completion: @escaping ((([Size]?) -> ())))  -> Cancellable {
+    func sizes(id: String, completion: @escaping ((([Size]?) -> ())))  -> Cancellable {
         return provider.request(.sizes(id: id)) { result in
             switch result {
             case .success(let response):
@@ -130,7 +137,7 @@ struct FlickrConnector {
         }
     }
     
-    static func pinningManager() -> Manager {
+    func pinningManager() -> Manager {
         let policies: [String: ServerTrustPolicy] = [
             "api.flickr.com": .pinCertificates(
                 certificates: ServerTrustPolicy.certificates(),

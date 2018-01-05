@@ -48,7 +48,7 @@ class ViewModel {
                 return SignalProducer<[Photo], NoError> { o, _ in
                     self.currentRequest?.cancel()
                     
-                    self.currentRequest = FlickrConnector.search(tag: self.currentSearch.value, page: self.currentPage.value, completion: { (photos) in
+                    self.currentRequest = FlickrConnector.shared.search(tag: self.currentSearch.value, page: self.currentPage.value, completion: { (photos) in
                         o.send(value: photos?.photos ?? [])
                         o.sendCompleted()
                     })
